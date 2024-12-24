@@ -1,0 +1,10 @@
+main:
+  push:
+    - docker:
+        image: node:18
+      imports: https://godgodgame.coding.net/p/tools/d/oci-private-key/git/tree/master/envs.yml
+      stages:
+        - name: 环境检查
+          script: echo $GITHUB_TOKEN_GK && echo $GITHUB_TOKEN && node -v && npm -v
+        - name: 将master分支同步更新到github的master分支
+          script: git push https://$GITHUB_TOKEN_GK:$GITHUB_TOKEN@github.com/zhezzma/playwright-proxy.git HEAD:main
