@@ -1,11 +1,12 @@
 import { Hono } from 'hono'
 import { serve } from '@hono/node-server'
 import { chromium, type Browser, type Route } from 'playwright'
+import process from 'process';
 
 const app = new Hono()
 
 // 浏览器实例
-let browser: Browser|null = null
+let browser: Browser | null = null
 
 // 初始化浏览器
 async function initBrowser() {
@@ -37,7 +38,7 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
   const page = await browser.newPage()
 
   console.log('处理请求:', method, url, headers, body)
-  
+
   try {
     // 只移除确实需要移除的请求头
     delete headers['host']
@@ -45,9 +46,9 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
     delete headers['content-length']
     // 保留 accept-encoding，让浏览器正确处理压缩
     // delete headers['accept-encoding']
-    
+
     // 设置请求拦截器
-    await page.route('**/*', async (route:Route) => {
+    await page.route('**/*', async (route: Route) => {
       const request = route.request()
       if (request.url() === url) {
         await route.continue({
@@ -80,11 +81,11 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
     // 获取响应数据
     const status = response.status()
     const responseHeaders = response.headers()
-    
+
     // 确保移除可能导致解码问题的响应头
     delete responseHeaders['content-encoding']
     delete responseHeaders['content-length']
-    
+
     // 过滤无效的响应头
     const validHeaders: Record<string, string> = {}
     for (const [key, value] of Object.entries(responseHeaders)) {
@@ -105,7 +106,7 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
       headers: validHeaders,
       body: responseBody
     }
-  } catch (error:any) {
+  } catch (error: any) {
     await page.close()
     console.error('请求处理错误:', error)
     throw new Error(`请求失败: ${error.message}`)
@@ -158,12 +159,12 @@ async function cleanup() {
 // 监听进程退出信号
 process.on('SIGINT', cleanup)
 process.on('SIGTERM', cleanup)
-const port = 8088
+
+const port = Number(process.env.PORT || '7860');
+console.log(`Server is running on port  http://localhost:${port}`)
+
 // 启动服务器
 serve({
   fetch: app.fetch,
   port: port
 })
-
-// 启动服务器
-console.log(`Server is running on port  http://localhost:${port}`)
