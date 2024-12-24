@@ -100,6 +100,8 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
     // 直接获取响应体的二进制数据
     const responseBody = await response.body()
 
+    console.log('请求处理完成:', status, responseBody.toString())
+
     await page.close()
 
     return {
