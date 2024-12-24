@@ -1,11 +1,11 @@
 import { Hono } from 'hono'
 import { serve } from '@hono/node-server'
-import { chromium } from 'playwright'
+import { chromium, type Browser, type Route } from 'playwright'
 
 const app = new Hono()
 
 // 浏览器实例
-let browser: any = null
+let browser: Browser|null = null
 
 // 初始化浏览器
 async function initBrowser() {
@@ -38,7 +38,7 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
     // delete headers['accept-encoding']
     
     // 设置请求拦截器
-    await page.route('**/*', async (route:any) => {
+    await page.route('**/*', async (route:Route) => {
       const request = route.request()
       if (request.url() === url) {
         await route.continue({
