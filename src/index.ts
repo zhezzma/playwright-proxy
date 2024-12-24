@@ -22,6 +22,15 @@ async function initBrowser() {
   return browser
 }
 
+// 验证响应头值是否有效
+function isValidHeaderValue(value: string): boolean {
+  // 检查值是否为空或包含无效字符
+  if (!value || typeof value !== 'string') return false;
+  // 检查是否包含换行符或回车符
+  if (/[\r\n]/.test(value)) return false;
+  return true;
+}
+
 // 处理请求转发
 async function handleRequest(url: string, method: string, headers: any, body?: any) {
   const browser = await initBrowser()
@@ -76,6 +85,16 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
     delete responseHeaders['content-encoding']
     delete responseHeaders['content-length']
     
+    // 过滤无效的响应头
+    const validHeaders: Record<string, string> = {}
+    for (const [key, value] of Object.entries(responseHeaders)) {
+      if (isValidHeaderValue(value)) {
+        validHeaders[key] = value
+      } else {
+        console.warn(`跳过无效的响应头: ${key}: ${value}`)
+      }
+    }
+
     // 直接获取响应体的二进制数据
     const responseBody = await response.body()
 
@@ -83,7 +102,7 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
 
     return {
       status,
-      headers: responseHeaders,
+      headers: validHeaders,
       body: responseBody
     }
   } catch (error:any) {
