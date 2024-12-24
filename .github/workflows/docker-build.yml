@@ -1,0 +1,37 @@
+name: Deploy to HF Spaces
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        
+      # 配置 Git
+      - name: Configure Git
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      # 克隆 HF Space 仓库并复制文件
+      - name: Clone HF Space
+        run: |
+          cd ..
+          git clone https://zhepama:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/zhepama/playwright-proxy hf-repo
+          
+          # 使用 rsync 复制文件，排除不需要的文件
+          rsync -av --exclude='.git' \
+                    --exclude='.github' \
+                    --exclude='.gitignore' \
+                    --exclude='node_modules' \
+                    --exclude='README.md' \
+                    $GITHUB_WORKSPACE/ hf-repo/
+          
+          cd hf-repo
+          git add .
+          git commit -m "Update from GitHub Actions"
+          git push
