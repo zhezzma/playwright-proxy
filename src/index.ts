@@ -40,7 +40,7 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
   const browser = await initBrowser()
   const page = await browser.newPage()
 
-  console.log('处理请求:', method, url, headers, body)
+
 
   try {
     // 只移除确实需要移除的请求头
@@ -56,6 +56,7 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
     delete headers['cf-visitor']
     delete headers['cf-worker']
 
+    console.log('处理请求:', method, url, headers, body)
     // 设置请求拦截器
     await page.route('**/*', async (route: Route) => {
       const request = route.request()
