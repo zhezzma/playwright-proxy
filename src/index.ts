@@ -63,7 +63,7 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
     delete headers['x-forwarded-port']
     delete headers['x-forwarded-proto']
 
-
+    headers['user-agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
 
     console.log('处理请求:', method, url, headers, body)
     // 设置请求拦截器
