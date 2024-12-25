@@ -9,8 +9,10 @@ const app = new Hono()
 // 添加静态文件服务
 app.use('/public/*', serveStatic({ root: './' }))
 
-// 设置首页
-app.use('/', serveStatic({ path: './public/index.html' }))
+// 添加根路由重定向
+app.get('/', (c) => {
+  return c.redirect('/public/index.html')
+})
 
 // 浏览器实例
 let browser: Browser | null = null
