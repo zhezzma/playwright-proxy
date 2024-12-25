@@ -56,6 +56,14 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
     delete headers['cf-visitor']
     delete headers['cf-worker']
 
+    //移除其他无效的请求头
+    delete headers['x-direct-url']
+    delete headers['x-forwarded-for']
+    delete headers['x-forwarded-port']
+    delete headers['x-forwarded-proto']
+
+
+
     console.log('处理请求:', method, url, headers, body)
     // 设置请求拦截器
     await page.route('**/*', async (route: Route) => {
