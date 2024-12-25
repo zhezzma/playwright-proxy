@@ -47,6 +47,7 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
     delete headers['host']
     delete headers['connection']
     delete headers['content-length']
+    delete headers['accept-encoding']
     // 移除cf相关的头
     delete headers['cdn-loop']
     delete headers['cf-connecting-ip']
