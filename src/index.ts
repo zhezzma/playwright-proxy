@@ -130,10 +130,9 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
 app.use('/public/*', serveStatic({ root: './' }))
 
 // 添加根路由重定向
-// app.get('/', (c) => {
-//   return c.redirect('/public/index.html')
-// })
-app.use('', serveStatic({ path: './public/index.html' }))
+app.get('/', (c) => {
+  return c.redirect('/public/index.html')
+})
 
 // 处理所有 HTTP 方法
 app.all('*', async (c) => {
