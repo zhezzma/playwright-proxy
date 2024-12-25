@@ -31,8 +31,9 @@ ENV PLAYWRIGHT_SKIP_BROWSER_VALIDATION=1
 COPY package*.json tsconfig.json ./
 RUN npm install
 
-# 复制源代码并构建
+# 复制源代码和静态文件
 COPY src/ ./src/
+COPY public/ ./public/
 RUN npm run build
 
 # 创建非 root 用户和用户组

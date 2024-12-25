@@ -1,9 +1,18 @@
 import { Hono } from 'hono'
 import { serve } from '@hono/node-server'
+import { serveStatic } from '@hono/node-server/serve-static'
 import { chromium, type Browser, type Route } from 'playwright'
 import process from 'process';
 
 const app = new Hono()
+
+// 添加静态文件服务
+app.use('/public/*', serveStatic({ root: './' }))
+
+// 添加根路由重定向
+app.get('/', (c) => {
+  return c.redirect('/public/index.html')
+})
 
 // 浏览器实例
 let browser: Browser | null = null
@@ -97,7 +106,7 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
       }
     }
 
-    // 直接获取响应体的二进制数据
+    // 直接获���响应体的二进制数据
     const responseBody = await response.body()
 
     console.log('请求处理完成:', status, responseBody.toString())
