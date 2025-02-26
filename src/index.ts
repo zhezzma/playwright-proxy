@@ -84,7 +84,7 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
     // 配置页面请求选项
     const response = await page.goto(url, {
       waitUntil: 'domcontentloaded', // 改为更快的加载策略
-      timeout: 120000
+      timeout: 300000
     })
 
     if (!response) {
