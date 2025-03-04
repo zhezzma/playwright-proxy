@@ -195,15 +195,15 @@ app.get('/genspark', async (c) => {
     await gensparkContext.clearCookies()
     await gensparkContext.addCookies(cookies);
   }
-  await new Promise(resolve => setTimeout(resolve,  1000));
+  await new Promise(resolve => setTimeout(resolve, 1000));
   const gensparkPage = await gensparkContext.newPage()
-  try { 
+  try {
     //刷新页面以确保获取新令牌
     await gensparkPage.goto('https://www.genspark.ai/agents?type=moa_chat', {
       waitUntil: 'networkidle',
       timeout: 3600000
     })
-    await new Promise(resolve => setTimeout(resolve,  1000));
+    await new Promise(resolve => setTimeout(resolve, 1000));
     // 执行脚本获取令牌
     const token = await gensparkPage.evaluate(() => {
       return new Promise((resolve, reject) => {
