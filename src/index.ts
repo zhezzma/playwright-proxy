@@ -223,18 +223,16 @@ app.get('/genspark', async (c) => {
       await gensparkContext.clearCookies();
       await gensparkContext.addCookies(cookies);
     }
-
+    await new Promise(resolve => setTimeout(resolve, 300));
     page = await gensparkContext.newPage();
-
+    await page.waitForTimeout(300);
     // 导航到Genspark页面
     await page.goto(GENSPARK_URL, {
       waitUntil: 'networkidle',
       timeout: 30000 // 30秒超时，更合理
     });
-
     // 等待页面加载完成
-    await page.waitForTimeout(1000);
-
+    await page.waitForTimeout(300);
     // 获取reCAPTCHA令牌
     const token = await getReCaptchaToken(page);
 
