@@ -20,6 +20,7 @@ RUN apk add --no-cache \
     ttf-freefont \
     # X11 相关依赖
     xvfb \
+    xvfb-run \
     xorg-server \
     dbus \
     ttf-liberation \
@@ -39,7 +40,6 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/usr/bin
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
 ENV PLAYWRIGHT_SKIP_BROWSER_VALIDATION=1
-ENV DISPLAY=:99
 
 # 复制依赖文件并安装
 COPY package*.json tsconfig.json ./
@@ -64,5 +64,5 @@ USER hono
 EXPOSE 7860
 ENV PORT=7860
 
-# 启动应用，使用 Xvfb 提供虚拟显示
-CMD ["sh", "-c", "Xvfb :99 -screen 0 1024x768x16 & sleep 1 && node dist/index.js"]
+# 使用 xvfb-run 启动应用
+CMD ["xvfb-run", "--server-args='-screen 0 1024x768x24'", "node", "dist/index.js"]
