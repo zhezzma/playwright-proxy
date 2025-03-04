@@ -41,7 +41,7 @@ async function initGensparkContext() {
       viewport: { width: 1920, height: 1080 },
       deviceScaleFactor: 1,
       hasTouch: false,
-      locale: 'en-US',
+      locale: 'zh-CN',
       timezoneId: 'America/New_York',
       geolocation: { longitude: -73.935242, latitude: 40.730610 }, // 纽约坐标，可根据需要调整
       permissions: ['geolocation'],
@@ -136,7 +136,7 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
     }
 
     // 等待页面加载完成，使用更短的超时时间
-    await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {
+    await page.waitForLoadState('networkidle', { timeout: 600000 }).catch(() => {
       console.log('等待页面加载超时，继续处理');
     });
 
