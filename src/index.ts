@@ -222,7 +222,29 @@ app.get('/genspark', async (c) => {
       return c.json({ code: 500, message: '获取令牌失败' })
     });
 
-    return c.json({ code: 200, message: '获取令牌成功', token: token })
+    const token2 = await gensparkPage.evaluate(() => {
+      return new Promise((resolve, reject) => {
+        // @ts-ignore
+        window.grecaptcha.ready(function () {
+          // @ts-ignore
+          grecaptcha.execute(
+            "6Leq7KYqAAAAAGdd1NaUBJF9dHTPAKP7DcnaRc66",
+            { action: 'copilot' },
+          ).then(function (token: string) {
+            resolve(token)
+          }).catch(function (error: Error) {
+            reject(error)
+          });
+        });
+
+        // 设置超时
+        setTimeout(() => reject(new Error("获取令牌超时")), 10000);
+      });
+    }).catch(error => {
+      return c.json({ code: 500, message: '获取令牌失败' })
+    });
+
+    return c.json({ code: 200, message: '获取令牌成功', token: token2 })
   }
   catch (error) {
     console.error('获取令牌失败:', error)
