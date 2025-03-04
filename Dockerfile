@@ -46,9 +46,13 @@ COPY public/ ./public/
 COPY index.html ./index.html
 RUN npm run build
 
-# 创建启动脚本
-RUN echo '#!/bin/sh\nXvfb :99 -screen 0 1024x768x16 -ac &\nsleep 1\nnode dist/index.js' > /app/start.sh && \
-    chmod +x /app/start.sh
+# 创建启动脚本 - 确保在正确位置创建并设置权限
+RUN echo '#!/bin/sh' > /app/start.sh && \
+    echo 'Xvfb :99 -screen 0 1024x768x16 -ac &' >> /app/start.sh && \
+    echo 'sleep 1' >> /app/start.sh && \
+    echo 'node dist/index.js' >> /app/start.sh && \
+    chmod +x /app/start.sh && \
+    ls -la /app/start.sh  # 验证文件存在并有执行权限
 
 # 创建非 root 用户和用户组
 RUN addgroup -S -g 1001 nodejs && \
@@ -57,6 +61,9 @@ RUN addgroup -S -g 1001 nodejs && \
 # 设置应用文件的所有权
 RUN chown -R hono:nodejs /app
 
+# 确保脚本有正确的权限
+RUN chmod 755 /app/start.sh
+
 # 切换到非 root 用户
 USER hono
 
@@ -64,5 +71,5 @@ USER hono
 EXPOSE 7860
 ENV PORT=7860
 
-# 启动应用
-CMD ["/app/start.sh"]
+# 启动应用 - 使用绝对路径
+CMD ["/bin/sh", "/app/start.sh"]
