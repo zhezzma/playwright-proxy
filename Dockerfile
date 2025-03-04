@@ -18,14 +18,23 @@ RUN apk add --no-cache \
     harfbuzz \
     ca-certificates \
     ttf-freefont \
+    # X11 和显示相关依赖
+    xvfb \
+    x11vnc \
+    xorg-server \
     # 其他依赖
-    gcompat
+    gcompat \
+    dbus \
+    eudev \
+    ttf-liberation \
+    fontconfig
 
 # 设置 Playwright 的环境变量
 ENV PLAYWRIGHT_BROWSERS_PATH=/usr/bin
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
 ENV PLAYWRIGHT_SKIP_BROWSER_VALIDATION=1
+ENV DISPLAY=:99
 
 # 复制依赖文件并安装
 COPY package*.json tsconfig.json ./
@@ -36,6 +45,10 @@ COPY src/ ./src/
 COPY public/ ./public/
 COPY index.html ./index.html
 RUN npm run build
+
+# 创建启动脚本
+RUN echo '#!/bin/sh\nXvfb :99 -screen 0 1024x768x16 -ac &\nsleep 1\nnode dist/index.js' > /app/start.sh && \
+    chmod +x /app/start.sh
 
 # 创建非 root 用户和用户组
 RUN addgroup -S -g 1001 nodejs && \
@@ -52,4 +65,4 @@ EXPOSE 7860
 ENV PORT=7860
 
 # 启动应用
-CMD ["node", "dist/index.js"]
+CMD ["/app/start.sh"]
