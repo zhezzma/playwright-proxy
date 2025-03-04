@@ -1,29 +1,54 @@
 import { Hono } from 'hono'
 import { serve } from '@hono/node-server'
 import { serveStatic } from '@hono/node-server/serve-static'
-import { chromium, type Browser, type Route } from 'playwright'
-import process from 'process';
+import { chromium, type Browser, type BrowserContext, type Route, type Page } from 'playwright'
+import process from 'process'
+import fs from 'fs'
 
 const app = new Hono()
 
-
 // 浏览器实例
 let browser: Browser | null = null
-
+let gensparkContext: BrowserContext | null = null
+// 为genspark保存的page实例
+let gensparkPage: Page | null = null
+const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3';
 // 初始化浏览器
 async function initBrowser() {
   if (!browser) {
     browser = await chromium.launch({
-      headless: true,
+      headless: false,
       args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage'
       ],
       executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, // 使用系统 Chromium
     })
   }
   return browser
+}
+
+// 初始化genspark页面
+async function initGensparkPage(cookies?: any[]) {
+  const browser = await initBrowser()
+
+  if (!gensparkContext) {
+    gensparkContext = await browser.newContext({
+      locale: 'zh-CN',
+      userAgent: userAgent,
+    })
+  }
+  if (cookies && cookies.length > 0) {
+    await gensparkContext.addCookies(cookies);
+  }
+  if (!gensparkPage) {
+    gensparkPage = await gensparkContext.newPage()
+    // 首次加载页面
+    await gensparkPage.goto('https://www.genspark.ai', {
+      waitUntil: 'networkidle',
+      timeout: 60000
+    })
+    console.log('GenSpark页面已初始化')
+  }
+  return gensparkPage
 }
 
 // 验证响应头值是否有效
@@ -39,8 +64,6 @@ function isValidHeaderValue(value: string): boolean {
 async function handleRequest(url: string, method: string, headers: any, body?: any) {
   const browser = await initBrowser()
   const page = await browser.newPage()
-
-
 
   try {
     // 只移除确实需要移除的请求头
@@ -63,7 +86,7 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
     delete headers['x-forwarded-port']
     delete headers['x-forwarded-proto']
 
-    headers['user-agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+    headers['user-agent'] = userAgent
 
     console.log('处理请求:', method, url, headers, body)
     // 设置请求拦截器
@@ -72,7 +95,10 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
       if (request.url() === url) {
         await route.continue({
           method: method,
-          headers: headers,
+          headers: {
+            ...request.headers(),
+            ...headers
+          },
           postData: body
         })
       } else {
@@ -96,7 +122,6 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
       console.log('等待页面加载超时，继续处理')
     })
 
-
     // 获取响应数据
     const status = response.status()
     const responseHeaders = response.headers()
@@ -108,8 +133,8 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
     // 过滤无效的响应头
     const validHeaders: Record<string, string> = {}
     for (const [key, value] of Object.entries(responseHeaders)) {
-      if (isValidHeaderValue(value)) {
-        validHeaders[key] = value
+      if (isValidHeaderValue(value as string)) {
+        validHeaders[key] = value as string
       } else {
         console.warn(`跳过无效的响应头: ${key}: ${value}`)
       }
@@ -135,13 +160,79 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
 }
 
 
-
 // 添加静态文件服务
 app.use('/public/*', serveStatic({ root: './' }))
 
-// 添加根路由重定向
-app.get('/', (c) => {
-  return c.redirect('/public/index.html')
+// 修改点 1: 处理根路由直接返回 index.html 内容，而不是重定向
+app.get('/', async (c) => {
+  try {
+    const htmlContent = fs.readFileSync('./index.html', 'utf-8')
+    return c.html(htmlContent)
+  } catch (error) {
+    console.error('读取index.html失败:', error)
+    return c.text('无法读取主页', 500)
+  }
+})
+
+// 修改点 2: 添加 /genspark 路由来获取reCAPTCHA令牌
+app.get('/genspark', async (c) => {
+  try {
+    const headers = Object.fromEntries(c.req.raw.headers)
+    // Get the cookie string from headers
+    const cookieString = headers.cookie || '';
+    // Parse cookies into an array of objects with name and value properties
+    const cookies = cookieString.split(';').map(cookie => {
+      const [name, value] = cookie.trim().split('=');
+      return { name, value, domain: 'www.genspark.ai', path: '/' };
+    }).filter(cookie => cookie.name && cookie.value);
+
+    const gensparkPage = await initGensparkPage(cookies)
+
+    //刷新页面以确保获取新令牌
+    await gensparkPage.goto('https://www.genspark.ai/agents?type=moa_chat', {
+      waitUntil: 'networkidle',
+      timeout: 30000
+    })
+
+    // 执行脚本获取令牌
+    const token = await gensparkPage.evaluate(() => {
+      return new Promise((resolve, reject) => {
+        // @ts-ignore
+        window.grecaptcha.ready(function () {
+          // @ts-ignore
+          grecaptcha.execute(
+            "6Leq7KYqAAAAAGdd1NaUBJF9dHTPAKP7DcnaRc66",
+            { action: 'copilot' },
+          ).then(function (token: string) {
+            resolve(token)
+          }).catch(function (error: Error) {
+            reject(error)
+          });
+        });
+
+        // 设置超时
+        setTimeout(() => reject(new Error("获取令牌超时")), 10000);
+      });
+    }).catch(error => {
+      return c.json({ code: 500, message: '获取令牌失败' })
+    });
+
+    return c.json({ code: 200, message: '获取令牌成功', token: token })
+  }
+  catch (error) {
+    console.error('获取令牌失败:', error)
+    if (gensparkPage) {
+      await gensparkPage.close().catch(() => { });
+      gensparkPage = null;
+    }
+
+    if (gensparkContext) {
+      await gensparkContext.close().catch(() => { });
+      gensparkContext = null;
+    }
+    return c.json({ code: 500, message: '获取令牌失败' })
+  }
+
 })
 
 // 处理所有 HTTP 方法
@@ -181,8 +272,19 @@ app.all('*', async (c) => {
 
 // 清理函数
 async function cleanup() {
+  if (gensparkPage) {
+    await gensparkPage.close().catch(() => { });
+    gensparkPage = null;
+  }
+
+  if (gensparkContext) {
+    await gensparkContext.close().catch(() => { });
+    gensparkContext = null;
+  }
+
   if (browser) {
-    await browser.close()
+    await browser.close().catch(() => { });
+    browser = null;
   }
   process.exit(0)
 }
@@ -190,6 +292,18 @@ async function cleanup() {
 // 监听进程退出信号
 process.on('SIGINT', cleanup)
 process.on('SIGTERM', cleanup)
+
+initGensparkPage().catch(async() => {
+  if (gensparkPage) {
+    await gensparkPage.close().catch(() => { });
+    gensparkPage = null;
+  }
+
+  if (gensparkContext) {
+    await gensparkContext.close().catch(() => { });
+    gensparkContext = null;
+  }
+})
 
 const port = Number(process.env.PORT || '7860');
 console.log(`Server is running on port  http://localhost:${port}`)
