@@ -69,34 +69,6 @@ async function initGensparkPage(cookies?: any[]) {
           get: () => userAgent.replace('HeadlessChrome', 'Chrome'),
         });
       }
-
-      // 添加语言和插件，使其看起来更像真实浏览器
-      Object.defineProperty(navigator, 'languages', {
-        get: () => ['en-US', 'en', 'zh-CN'],
-      });
-
-      // 添加假的插件信息
-      Object.defineProperty(navigator, 'plugins', {
-        get: () => {
-          return [
-            {
-              description: "Portable Document Format",
-              filename: "internal-pdf-viewer",
-              name: "Chrome PDF Plugin"
-            },
-            {
-              description: "Portable Document Format",
-              filename: "mhjfbmdgcfjbbpaeojofohoefgiehjai",
-              name: "Chrome PDF Viewer"
-            },
-            {
-              description: "Widevine Content Decryption Module",
-              filename: "widevinecdmadapter.dll",
-              name: "Widevine Content Decryption Module"
-            }
-          ];
-        },
-      });
     });
 
     // 首次加载页面
@@ -231,8 +203,6 @@ app.get('/', async (c) => {
     return c.text('无法读取主页', 500)
   }
 })
-
-let lastCookies = null
 
 // 修改点 2: 添加 /genspark 路由来获取reCAPTCHA令牌
 app.get('/genspark', async (c) => {
