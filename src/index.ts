@@ -69,14 +69,14 @@ async function getReCaptchaToken(page: Page): Promise<string> {
   return page.evaluate(() => {
     return new Promise<string>((resolve, reject) => {
       // @ts-ignore
-      window.grecaptcha.ready(function () {
+      window.grecaptcha.ready(function() {
         // @ts-ignore
         grecaptcha.execute(
           RECAPTCHA_SITE_KEY,
           { action: 'copilot' },
-        ).then(function (token: string) {
+        ).then(function(token: string) {
           resolve(token)
-        }).catch(function (error: Error) {
+        }).catch(function(error: Error) {
           reject(error)
         });
       });
@@ -101,12 +101,12 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
       'cf-ray', 'cf-visitor', 'cf-worker', 'x-direct-url',
       'x-forwarded-for', 'x-forwarded-port', 'x-forwarded-proto'
     ];
-
+    
     headersToRemove.forEach(header => delete filteredHeaders[header]);
     filteredHeaders['user-agent'] = userAgent;
 
     console.log('处理请求:', method, url, filteredHeaders, body);
-
+    
     // 设置请求拦截器
     await page.route('**/*', async (route: Route) => {
       const request = route.request();
@@ -128,7 +128,7 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
     // 配置页面请求选项
     const response = await page.goto(url, {
       waitUntil: 'domcontentloaded', // 改为更快的加载策略
-      timeout: 600000 // 60秒超时，更合理的值
+      timeout: 60000 // 60秒超时，更合理的值
     });
 
     if (!response) {
@@ -136,7 +136,7 @@ async function handleRequest(url: string, method: string, headers: any, body?: a
     }
 
     // 等待页面加载完成，使用更短的超时时间
-    await page.waitForLoadState('networkidle', { timeout: 600000 }).catch(() => {
+    await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {
       console.log('等待页面加载超时，继续处理');
     });
 
@@ -182,11 +182,11 @@ function parseCookies(cookieString: string) {
   return cookieString.split(';')
     .map(cookie => {
       const [name, value] = cookie.trim().split('=');
-      return {
-        name,
-        value,
-        domain: 'www.genspark.ai',
-        path: '/'
+      return { 
+        name, 
+        value, 
+        domain: 'www.genspark.ai', 
+        path: '/' 
       };
     })
     .filter(cookie => cookie.name && cookie.value);
@@ -214,53 +214,59 @@ app.get('/genspark', async (c) => {
 
   let page = null;
   let error = null;
-
+  
   try {
     gensparkContext = await initGensparkContext();
-
+    
     // 设置cookies
     if (cookies.length > 0) {
       await gensparkContext.clearCookies();
       await gensparkContext.addCookies(cookies);
     }
-    await new Promise(resolve => setTimeout(resolve, 300));
+
+
+    //等待一段时间
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     page = await gensparkContext.newPage();
-    await page.waitForTimeout(300);
+    
     // 导航到Genspark页面
     await page.goto(GENSPARK_URL, {
       waitUntil: 'networkidle',
       timeout: 30000 // 30秒超时，更合理
     });
+    
     // 等待页面加载完成
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(1000);
+    
     // 获取reCAPTCHA令牌
     const token = await getReCaptchaToken(page);
-
+    
     if (!token) {
       return c.json({ code: 500, message: '获取令牌失败：令牌为空' });
     }
-
-    return c.json({
-      code: 200,
-      message: '获取令牌成功',
-      token: token
+    
+    return c.json({ 
+      code: 200, 
+      message: '获取令牌成功', 
+      token: token 
     });
   } catch (e) {
     error = e
     console.error('获取令牌失败:', e);
-    return c.json({
-      code: 500,
-      message: `获取令牌失败: ${e instanceof Error ? e.message : '未知错误'}`
+    return c.json({ 
+      code: 500, 
+      message: `获取令牌失败: ${e instanceof Error ? e.message : '未知错误'}` 
     });
   } finally {
     if (page) {
-      await page.close().catch(() => { });
+      await page.close().catch(() => {});
     }
-
+    
     // 不要在每次请求后关闭上下文，保持它以便重用
     // 只有在出错时才重置上下文
     if (error && gensparkContext) {
-      await gensparkContext.close().catch(() => { });
+      await gensparkContext.close().catch(() => {});
       gensparkContext = null;
     }
   }
@@ -304,12 +310,12 @@ app.all('*', async (c) => {
 // 清理函数
 async function cleanup() {
   if (gensparkContext) {
-    await gensparkContext.close().catch(() => { });
+    await gensparkContext.close().catch(() => {});
     gensparkContext = null;
   }
 
   if (browser) {
-    await browser.close().catch(() => { });
+    await browser.close().catch(() => {});
     browser = null;
   }
   process.exit(0)
