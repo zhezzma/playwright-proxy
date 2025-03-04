@@ -39,7 +39,7 @@ async function initGensparkContext() {
       deviceScaleFactor: 1,
       hasTouch: false,
       locale: 'zh-CN',
-      timezoneId: 'America/New_York',
+      timezoneId: 'Asia/Shanghai',
       geolocation: { longitude: -73.935242, latitude: 40.730610 }, // 纽约坐标，可根据需要调整
       permissions: ['geolocation'],
       javaScriptEnabled: true,
