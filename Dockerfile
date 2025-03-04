@@ -18,20 +18,6 @@ RUN apk add --no-cache \
     harfbuzz \
     ca-certificates \
     ttf-freefont \
-    # X11 相关依赖
-    xvfb \
-    xvfb-run \
-    xorg-server \
-    dbus \
-    ttf-liberation \
-    libx11 \
-    libxcomposite \
-    libxdamage \
-    libxext \
-    libxfixes \
-    libxrandr \
-    mesa-gl \
-    alsa-lib \
     # 其他依赖
     gcompat
 
@@ -64,5 +50,5 @@ USER hono
 EXPOSE 7860
 ENV PORT=7860
 
-# 使用 xvfb-run 启动应用
-CMD ["xvfb-run", "--server-args='-screen 0 1024x768x24'", "node", "dist/index.js"]
+# 启动应用
+CMD ["node", "dist/index.js"]
