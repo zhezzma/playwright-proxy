@@ -37,8 +37,9 @@ async function initGensparkContext() {
       userAgent: userAgent,
       viewport: { width: 1920, height: 1080 },
       deviceScaleFactor: 1,
-      hasTouch: false,
-      locale: 'zh-CN',
+      isMobile: true,
+      hasTouch: true,
+      locale: 'en-US',
       timezoneId: 'America/New_York',
       geolocation: { longitude: -73.935242, latitude: 40.730610 }, // 纽约坐标，可根据需要调整
       permissions: ['geolocation'],
