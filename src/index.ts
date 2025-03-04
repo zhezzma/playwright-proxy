@@ -296,7 +296,7 @@ async function cleanup() {
 process.on('SIGINT', cleanup)
 process.on('SIGTERM', cleanup)
 
-initGensparkPage().catch(async() => {
+initGensparkPage().catch(async () => {
   if (gensparkPage) {
     await gensparkPage.close().catch(() => { });
     gensparkPage = null;
