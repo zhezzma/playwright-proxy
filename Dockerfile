@@ -42,7 +42,6 @@ RUN npm install
 
 # 复制源代码和静态文件
 COPY src/ ./src/
-COPY public/ ./public/
 COPY index.html ./index.html
 RUN npm run build
 
