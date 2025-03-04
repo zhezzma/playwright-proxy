@@ -188,6 +188,8 @@ app.get('/genspark', async (c) => {
   }).filter(cookie => cookie.name && cookie.value);
 
   gensparkContext = await initGensparkContext()
+
+  console.log('Cookies:', cookies)
   if (cookies && cookies.length > 0) {
     await gensparkContext.clearCookies()
     await gensparkContext.addCookies(cookies);
@@ -223,7 +225,7 @@ app.get('/genspark', async (c) => {
     }).catch(error => {
       return c.json({ code: 500, message: '获取令牌失败' })
     });
-
+    console.log('token:', token)
     return c.json({ code: 200, message: '获取令牌成功', token: token })
   }
   catch (error) {
@@ -236,7 +238,7 @@ app.get('/genspark', async (c) => {
   finally {
     await gensparkPage.close().catch(() => { });
   }
-
+  console.log('token:', "获取令牌失败")
   return c.json({ code: 500, message: '获取令牌失败' })
 })
 
