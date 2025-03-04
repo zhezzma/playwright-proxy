@@ -10,8 +10,7 @@ const app = new Hono()
 // 浏览器实例
 let browser: Browser | null = null
 let gensparkContext: BrowserContext | null = null
-// 为genspark保存的page实例
-let gensparkPage: Page | null = null
+
 const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3';
 // 初始化浏览器
 async function initBrowser() {
@@ -49,20 +48,11 @@ async function initGensparkPage(cookies?: any[]) {
       acceptDownloads: true,
     })
   }
-
-  if (!gensparkPage) {
-    gensparkPage = await gensparkContext.newPage()
-  }
   if (cookies && cookies.length > 0) {
+    await gensparkContext.clearCookies()
     await gensparkContext.addCookies(cookies);
-    // 首次加载页面
-    await gensparkPage.goto('https://www.genspark.ai', {
-      waitUntil: 'networkidle',
-      timeout: 60000
-    })
-    console.log('GenSpark页面已初始化')
   }
-
+  const gensparkPage = await gensparkContext.newPage()
   return gensparkPage
 }
 
@@ -191,18 +181,18 @@ app.get('/', async (c) => {
 
 // 修改点 2: 添加 /genspark 路由来获取reCAPTCHA令牌
 app.get('/genspark', async (c) => {
+
+  const headers = Object.fromEntries(c.req.raw.headers)
+  // Get the cookie string from headers
+  const cookieString = headers.cookie || '';
+  // Parse cookies into an array of objects with name and value properties
+  const cookies = cookieString.split(';').map(cookie => {
+    const [name, value] = cookie.trim().split('=');
+    return { name, value, domain: 'www.genspark.ai', path: '/' };
+  }).filter(cookie => cookie.name && cookie.value);
+
+  const gensparkPage = await initGensparkPage(cookies)
   try {
-    const headers = Object.fromEntries(c.req.raw.headers)
-    // Get the cookie string from headers
-    const cookieString = headers.cookie || '';
-    // Parse cookies into an array of objects with name and value properties
-    const cookies = cookieString.split(';').map(cookie => {
-      const [name, value] = cookie.trim().split('=');
-      return { name, value, domain: 'www.genspark.ai', path: '/' };
-    }).filter(cookie => cookie.name && cookie.value);
-
-    const gensparkPage = await initGensparkPage(cookies)
-
     //刷新页面以确保获取新令牌
     await gensparkPage.goto('https://www.genspark.ai/agents?type=moa_chat', {
       waitUntil: 'networkidle',
@@ -236,18 +226,16 @@ app.get('/genspark', async (c) => {
   }
   catch (error) {
     console.error('获取令牌失败:', error)
-    if (gensparkPage) {
-      await gensparkPage.close().catch(() => { });
-      gensparkPage = null;
-    }
-
     if (gensparkContext) {
       await gensparkContext.close().catch(() => { });
       gensparkContext = null;
     }
-    return c.json({ code: 500, message: '获取令牌失败' })
+  }
+  finally {
+    await gensparkPage.close().catch(() => { });
   }
 
+  return c.json({ code: 500, message: '获取令牌失败' })
 })
 
 // 处理所有 HTTP 方法
@@ -287,11 +275,6 @@ app.all('*', async (c) => {
 
 // 清理函数
 async function cleanup() {
-  if (gensparkPage) {
-    await gensparkPage.close().catch(() => { });
-    gensparkPage = null;
-  }
-
   if (gensparkContext) {
     await gensparkContext.close().catch(() => { });
     gensparkContext = null;
@@ -307,18 +290,6 @@ async function cleanup() {
 // 监听进程退出信号
 process.on('SIGINT', cleanup)
 process.on('SIGTERM', cleanup)
-
-initGensparkPage().catch(async () => {
-  if (gensparkPage) {
-    await gensparkPage.close().catch(() => { });
-    gensparkPage = null;
-  }
-
-  if (gensparkContext) {
-    await gensparkContext.close().catch(() => { });
-    gensparkContext = null;
-  }
-})
 
 const port = Number(process.env.PORT || '7860');
 console.log(`Server is running on port  http://localhost:${port}`)
