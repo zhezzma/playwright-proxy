@@ -193,12 +193,13 @@ app.get('/genspark', async (c) => {
 
   const gensparkPage = await initGensparkPage(cookies)
   try {
+    await gensparkPage.waitForTimeout(1000)
     //刷新页面以确保获取新令牌
     await gensparkPage.goto('https://www.genspark.ai/agents?type=moa_chat', {
       waitUntil: 'networkidle',
       timeout: 3600000
     })
-
+    await gensparkPage.waitForTimeout(1000)
     // 执行脚本获取令牌
     const token = await gensparkPage.evaluate(() => {
       return new Promise((resolve, reject) => {
@@ -222,29 +223,7 @@ app.get('/genspark', async (c) => {
       return c.json({ code: 500, message: '获取令牌失败' })
     });
 
-    const token2 = await gensparkPage.evaluate(() => {
-      return new Promise((resolve, reject) => {
-        // @ts-ignore
-        window.grecaptcha.ready(function () {
-          // @ts-ignore
-          grecaptcha.execute(
-            "6Leq7KYqAAAAAGdd1NaUBJF9dHTPAKP7DcnaRc66",
-            { action: 'copilot' },
-          ).then(function (token: string) {
-            resolve(token)
-          }).catch(function (error: Error) {
-            reject(error)
-          });
-        });
-
-        // 设置超时
-        setTimeout(() => reject(new Error("获取令牌超时")), 10000);
-      });
-    }).catch(error => {
-      return c.json({ code: 500, message: '获取令牌失败' })
-    });
-
-    return c.json({ code: 200, message: '获取令牌成功', token: token2 })
+    return c.json({ code: 200, message: '获取令牌成功', token: token })
   }
   catch (error) {
     console.error('获取令牌失败:', error)
