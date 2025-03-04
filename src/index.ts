@@ -17,7 +17,7 @@ const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 
 async function initBrowser() {
   if (!browser) {
     browser = await chromium.launch({
-      headless: false,
+      headless: true,
       args: [
       ],
       executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, // 使用系统 Chromium
