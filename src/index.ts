@@ -35,8 +35,18 @@ async function initGensparkPage(cookies?: any[]) {
 
   if (!gensparkContext) {
     gensparkContext = await browser.newContext({
-      locale: 'zh-CN',
-      userAgent: userAgent,
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      viewport: { width: 1920, height: 1080 },
+      deviceScaleFactor: 1,
+      hasTouch: false,
+      locale: 'en-US',
+      timezoneId: 'America/New_York',
+      geolocation: { longitude: -73.935242, latitude: 40.730610 }, // 纽约坐标，可根据需要调整
+      permissions: ['geolocation'],
+      javaScriptEnabled: true,
+      bypassCSP: true, // 绕过内容安全策略
+      colorScheme: 'light',
+      acceptDownloads: true,
     })
   }
   if (cookies && cookies.length > 0) {
@@ -44,6 +54,51 @@ async function initGensparkPage(cookies?: any[]) {
   }
   if (!gensparkPage) {
     gensparkPage = await gensparkContext.newPage()
+
+    // 修改 webdriver 和 navigator 属性以避免自动化检测
+    await gensparkPage.addInitScript(() => {
+      // 覆盖 webdriver 属性
+      Object.defineProperty(navigator, 'webdriver', {
+        get: () => false,
+      });
+
+      // 修改 user-agent 中的 HeadlessChrome 字符串
+      const userAgent = navigator.userAgent;
+      if (userAgent.includes('HeadlessChrome')) {
+        Object.defineProperty(navigator, 'userAgent', {
+          get: () => userAgent.replace('HeadlessChrome', 'Chrome'),
+        });
+      }
+
+      // 添加语言和插件，使其看起来更像真实浏览器
+      Object.defineProperty(navigator, 'languages', {
+        get: () => ['en-US', 'en', 'zh-CN'],
+      });
+
+      // 添加假的插件信息
+      Object.defineProperty(navigator, 'plugins', {
+        get: () => {
+          return [
+            {
+              description: "Portable Document Format",
+              filename: "internal-pdf-viewer",
+              name: "Chrome PDF Plugin"
+            },
+            {
+              description: "Portable Document Format",
+              filename: "mhjfbmdgcfjbbpaeojofohoefgiehjai",
+              name: "Chrome PDF Viewer"
+            },
+            {
+              description: "Widevine Content Decryption Module",
+              filename: "widevinecdmadapter.dll",
+              name: "Widevine Content Decryption Module"
+            }
+          ];
+        },
+      });
+    });
+
     // 首次加载页面
     await gensparkPage.goto('https://www.genspark.ai', {
       waitUntil: 'networkidle',
