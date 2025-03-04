@@ -76,3 +76,5 @@ ENV PORT=7860
 
 # 启动应用
 CMD ["/bin/sh", "/app/start.sh"]
+
+
