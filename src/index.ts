@@ -49,28 +49,12 @@ async function initGensparkPage(cookies?: any[]) {
       acceptDownloads: true,
     })
   }
-  if (cookies && cookies.length > 0) {
-    await gensparkContext.addCookies(cookies);
-  }
+
   if (!gensparkPage) {
     gensparkPage = await gensparkContext.newPage()
-
-    // 修改 webdriver 和 navigator 属性以避免自动化检测
-    await gensparkPage.addInitScript(() => {
-      // 覆盖 webdriver 属性
-      Object.defineProperty(navigator, 'webdriver', {
-        get: () => false,
-      });
-
-      // 修改 user-agent 中的 HeadlessChrome 字符串
-      const userAgent = navigator.userAgent;
-      if (userAgent.includes('HeadlessChrome')) {
-        Object.defineProperty(navigator, 'userAgent', {
-          get: () => userAgent.replace('HeadlessChrome', 'Chrome'),
-        });
-      }
-    });
-
+  }
+  if (cookies && cookies.length > 0) {
+    await gensparkContext.addCookies(cookies);
     // 首次加载页面
     await gensparkPage.goto('https://www.genspark.ai', {
       waitUntil: 'networkidle',
@@ -78,6 +62,7 @@ async function initGensparkPage(cookies?: any[]) {
     })
     console.log('GenSpark页面已初始化')
   }
+
   return gensparkPage
 }
 
