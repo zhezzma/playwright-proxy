@@ -192,7 +192,6 @@ app.get('/genspark', async (c) => {
     await gensparkContext.clearCookies()
     await gensparkContext.addCookies(cookies);
   }
-  await new Promise(resolve => setTimeout(resolve, 1000))
   const gensparkPage = await gensparkContext.newPage()
   try {
     await gensparkPage.waitForTimeout(500)
