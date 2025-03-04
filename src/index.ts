@@ -194,7 +194,7 @@ app.get('/genspark', async (c) => {
     //刷新页面以确保获取新令牌
     await gensparkPage.goto('https://www.genspark.ai/agents?type=moa_chat', {
       waitUntil: 'networkidle',
-      timeout: 5000000000
+      timeout: 3600000
     })
 
     // 执行脚本获取令牌
