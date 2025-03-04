@@ -72,7 +72,7 @@ async function getReCaptchaToken(page: Page): Promise<string> {
       window.grecaptcha.ready(function () {
         // @ts-ignore
         grecaptcha.execute(
-          "6Leq7KYqAAAAAGdd1NaUBJF9dHTPAKP7DcnaRc66",
+          RECAPTCHA_SITE_KEY,
           { action: 'copilot' },
         ).then(function (token: string) {
           resolve(token)
