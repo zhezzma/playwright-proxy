@@ -232,25 +232,31 @@ app.get('/', async (c) => {
   }
 })
 
+let lastCookies = null
+
 // 修改点 2: 添加 /genspark 路由来获取reCAPTCHA令牌
 app.get('/genspark', async (c) => {
   try {
     const headers = Object.fromEntries(c.req.raw.headers)
     // Get the cookie string from headers
     const cookieString = headers.cookie || '';
-    // Parse cookies into an array of objects with name and value properties
-    const cookies = cookieString.split(';').map(cookie => {
-      const [name, value] = cookie.trim().split('=');
-      return { name, value, domain: 'www.genspark.ai', path: '/' };
-    }).filter(cookie => cookie.name && cookie.value);
-
-    const gensparkPage = await initGensparkPage(cookies)
-
-    //刷新页面以确保获取新令牌
-    await gensparkPage.goto('https://www.genspark.ai/agents?type=moa_chat', {
-      waitUntil: 'networkidle',
-      timeout: 3600000
-    })
+    let gensparkPage = null
+    if (lastCookies != cookieString) {
+      // Parse cookies into an array of objects with name and value properties
+      const cookies = cookieString.split(';').map(cookie => {
+        const [name, value] = cookie.trim().split('=');
+        return { name, value, domain: 'www.genspark.ai', path: '/' };
+      }).filter(cookie => cookie.name && cookie.value);
+      gensparkPage = await initGensparkPage(cookies)
+      //刷新页面以确保获取新令牌
+      await gensparkPage.goto('https://www.genspark.ai/agents?type=moa_chat', {
+        waitUntil: 'networkidle',
+        timeout: 3600000
+      })
+    }
+    else {
+      gensparkPage = await initGensparkPage()
+    }
 
     // 执行脚本获取令牌
     const token = await gensparkPage.evaluate(() => {
