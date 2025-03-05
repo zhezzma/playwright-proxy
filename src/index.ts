@@ -225,7 +225,7 @@ app.get('/genspark', async (c) => {
     })
 
     // 等待并模拟人类交互
-    await gensparkPage.waitForTimeout(Math.random() * 2000 + 1000)
+    await gensparkPage.waitForTimeout(Math.random() * 1500 + 1000)
 
     // 随机鼠标移动
     await gensparkPage.mouse.move(
@@ -243,16 +243,6 @@ app.get('/genspark', async (c) => {
     // 等待输入框出现
     await gensparkPage.waitForSelector(inputSelector, { state: 'visible', timeout: 5000 });
     gensparkPage.focus(inputSelector);
-    // 模拟逐字输入（更像人类）
-    const testMessage = '模拟真实输入过程';
-    for (let char of testMessage) {
-      await gensparkPage.type(inputSelector, char, { 
-        delay: Math.random() * 100 + 50  // 随机延迟，模拟打字速度
-      });
-      await gensparkPage.waitForTimeout(Math.random() * 200);  // 额外随机等待
-    }
-    await gensparkPage.fill(inputSelector, '');
-    await gensparkPage.waitForTimeout(Math.random() * 1500 + 500)
     // 可选：触发搜索/提交
     await gensparkPage.keyboard.press('Enter');
 
