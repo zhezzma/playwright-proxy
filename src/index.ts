@@ -232,10 +232,9 @@ app.get('/genspark', async (c) => {
       Math.random() * gensparkPage.viewportSize()!.width,
       Math.random() * gensparkPage.viewportSize()!.height
     )
-    await gensparkPage.waitForSelector('.grecaptcha-badge', { timeout: 10000 })
+
     // 随机延迟点击
     await gensparkPage.waitForTimeout(Math.random() * 1500 + 500)
-
 
     // 使用精确的选择器定位输入框
     // 多种定位方式供选择
@@ -255,7 +254,7 @@ app.get('/genspark', async (c) => {
     await gensparkPage.fill(inputSelector, '');
     // 可选：触发搜索/提交
     await gensparkPage.keyboard.press('Enter');
-    
+
     // 执行脚本获取令牌
     const token = await gensparkPage.evaluate(() => {
       return new Promise((resolve, reject) => {
