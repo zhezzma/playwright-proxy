@@ -252,6 +252,7 @@ app.get('/genspark', async (c) => {
       await gensparkPage.waitForTimeout(Math.random() * 200);  // 额外随机等待
     }
     await gensparkPage.fill(inputSelector, '');
+    await gensparkPage.waitForTimeout(Math.random() * 1500 + 500)
     // 可选：触发搜索/提交
     await gensparkPage.keyboard.press('Enter');
 
