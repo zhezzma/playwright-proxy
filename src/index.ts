@@ -208,7 +208,7 @@ app.get('/genspark', async (c) => {
     await gensparkContext.clearCookies()
     await gensparkContext.addCookies(cookies);
   }
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  //await new Promise(resolve => setTimeout(resolve, 1000));
   const gensparkPage = await gensparkContext.newPage()
   try {
     // 模拟真实用户行为
@@ -225,7 +225,7 @@ app.get('/genspark', async (c) => {
     })
 
     // 等待并模拟人类交互
-    await gensparkPage.waitForTimeout(Math.random() * 2000 + 1000)
+    await gensparkPage.waitForTimeout(Math.random() * 1500 + 500)
 
     // 随机鼠标移动
     await gensparkPage.mouse.move(
@@ -242,7 +242,7 @@ app.get('/genspark', async (c) => {
     
     // 等待输入框出现
     await gensparkPage.waitForSelector(inputSelector, { state: 'visible', timeout: 5000 });
-
+    gensparkPage.focus(inputSelector);
     // 方法2：模拟逐字输入（更像人类）
     const testMessage = '模拟真实输入过程';
     for (let char of testMessage) {
