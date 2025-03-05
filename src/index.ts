@@ -211,44 +211,13 @@ app.get('/genspark', async (c) => {
     await gensparkContext.clearCookies()
     await gensparkContext.addCookies(cookies);
   }
-  await new Promise(resolve => setTimeout(resolve, 1000));
   const gensparkPage = await gensparkContext.newPage()
   try {
-    // 模拟真实用户行为
-    await gensparkPage.route('**/*', (route) => {
-      return route.request().resourceType() === 'image'
-        ? route.abort()
-        : route.continue()
-    })
-
     //刷新页面以确保获取新令牌
     await gensparkPage.goto('https://www.genspark.ai/agents?type=moa_chat', {
       waitUntil: 'networkidle',
       timeout: 3600000
     })
-
-    // 等待并模拟人类交互
-    await gensparkPage.waitForTimeout(Math.random() * 1500 + 1000)
-
-    // 随机鼠标移动
-    await gensparkPage.mouse.move(
-      Math.random() * gensparkPage.viewportSize()!.width,
-      Math.random() * gensparkPage.viewportSize()!.height
-    )
-
-    // 随机延迟点击
-    await gensparkPage.waitForTimeout(Math.random() * 1500 + 500)
-
-    // 使用精确的选择器定位输入框
-    // 多种定位方式供选择
-    const inputSelector = 'textarea[name="query"].search-input';
-
-    // 等待输入框出现
-    await gensparkPage.waitForSelector(inputSelector, { state: 'visible', timeout: 5000 });
-    gensparkPage.focus(inputSelector);
-    // 可选：触发搜索/提交
-    await gensparkPage.keyboard.press('Enter');
-
     // 执行脚本获取令牌
     const token = await gensparkPage.evaluate(() => {
       return new Promise((resolve, reject) => {
