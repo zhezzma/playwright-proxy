@@ -198,6 +198,9 @@ app.get('/genspark', async (c) => {
   // Parse cookies into an array of objects with name and value properties
   const cookies = cookieString.split(';').map(cookie => {
     const [name, value] = cookie.trim().split('=');
+    if (name.startsWith("_ga")) {
+      return { name, value, domain: 'genspark.ai', path: '/' };
+    }
     return { name, value, domain: 'www.genspark.ai', path: '/' };
   }).filter(cookie => cookie.name && cookie.value);
 
@@ -239,7 +242,7 @@ app.get('/genspark', async (c) => {
     // 使用精确的选择器定位输入框
     // 多种定位方式供选择
     const inputSelector = 'textarea[name="query"].search-input';
-    
+
     // 等待输入框出现
     await gensparkPage.waitForSelector(inputSelector, { state: 'visible', timeout: 5000 });
     gensparkPage.focus(inputSelector);
