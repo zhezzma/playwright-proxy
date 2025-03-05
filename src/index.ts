@@ -246,6 +246,30 @@ app.get('/genspark', async (c) => {
     // 可选：触发搜索/提交
     await gensparkPage.keyboard.press('Enter');
 
+
+    await fetch("https://td.doubleclick.net/td/ga/rul?tid=G-VL3SBJ0Y0F&gacid=334217393.1741091259&gtm=45je5330v9190289804za200&dma=0&gcd=13l3l3l3l1l1&npa=0&pscdl=noapi&aip=1&fledge=1&frm=0&tag_exp=102067808~102482433~102539968~102558064~102587591~102605417~102640600~102717422~102732003&z=302489313", {
+      "headers": {
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
+        "cache-control": "no-cache",
+        "pragma": "no-cache",
+        "priority": "u=0, i",
+        "sec-ch-ua": "\"Not(A:Brand\";v=\"99\", \"Microsoft Edge\";v=\"133\", \"Chromium\";v=\"133\"",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "sec-fetch-dest": "iframe",
+        "sec-fetch-mode": "navigate",
+        "sec-fetch-site": "cross-site",
+        "sec-fetch-storage-access": "active",
+        "sec-fetch-user": "?1",
+        "upgrade-insecure-requests": "1",
+        "cookie": "id=22111096e8f60001||t=1739928386|et=730|cs=002213fd488ca7c4e737d188c9; ar_debug=1"
+      },
+      "referrerPolicy": "no-referrer",
+      "body": null,
+      "method": "GET"
+    });
+
     // 执行脚本获取令牌
     const token = await gensparkPage.evaluate(() => {
       return new Promise((resolve, reject) => {
