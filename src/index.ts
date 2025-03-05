@@ -232,17 +232,29 @@ app.get('/genspark', async (c) => {
       Math.random() * gensparkPage.viewportSize()!.width,
       Math.random() * gensparkPage.viewportSize()!.height
     )
-    await gensparkPage.waitForSelector('#recaptcha-anchor', { timeout: 10000 })
+    await gensparkPage.waitForSelector('.grecaptcha-badge', { timeout: 10000 })
     // 随机延迟点击
     await gensparkPage.waitForTimeout(Math.random() * 1500 + 500)
-    // 模拟点击 reCAPTCHA
-    await gensparkPage.click('#recaptcha-anchor')
 
-    // 等待验证完成
-    await gensparkPage.waitForFunction(() => {
-      const checkbox = document.querySelector('#recaptcha-anchor')
-      return checkbox && checkbox.getAttribute('aria-checked') === 'true'
-    }, { timeout: 10000 })
+
+    // 使用精确的选择器定位输入框
+    // 多种定位方式供选择
+    const inputSelector = 'textarea[name="query"].search-input';
+    
+    // 等待输入框出现
+    await gensparkPage.waitForSelector(inputSelector, { state: 'visible', timeout: 5000 });
+
+    // 方法2：模拟逐字输入（更像人类）
+    const testMessage = '模拟真实输入过程';
+    for (let char of testMessage) {
+      await gensparkPage.type(inputSelector, char, { 
+        delay: Math.random() * 100 + 50  // 随机延迟，模拟打字速度
+      });
+      await gensparkPage.waitForTimeout(Math.random() * 200);  // 额外随机等待
+    }
+    await gensparkPage.fill(inputSelector, '');
+    // 可选：触发搜索/提交
+    await gensparkPage.keyboard.press('Enter');
     
     // 执行脚本获取令牌
     const token = await gensparkPage.evaluate(() => {
