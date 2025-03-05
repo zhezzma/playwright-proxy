@@ -243,8 +243,8 @@ app.get('/genspark', async (c) => {
     // 等待输入框出现
     await gensparkPage.waitForSelector(inputSelector, { state: 'visible', timeout: 5000 });
     gensparkPage.focus(inputSelector);
-    // 方法2：模拟逐字输入（更像人类）
-    const testMessage = '模拟真实输入过程';
+    // 模拟逐字输入（更像人类）
+    const testMessage = '模拟输入';
     for (let char of testMessage) {
       await gensparkPage.type(inputSelector, char, { 
         delay: Math.random() * 100 + 50  // 随机延迟，模拟打字速度
