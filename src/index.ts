@@ -21,6 +21,9 @@ async function initBrowser() {
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
+        '--disable-blink-features=AutomationControlled', // 禁用自动化特征
+        '--disable-infobars',
+        '--window-size=1920,1080'
       ],
       executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, // 使用系统 Chromium
     })
@@ -36,9 +39,10 @@ async function initGensparkContext() {
     gensparkContext = await browser.newContext({
       userAgent: userAgent,
       viewport: { width: 1920, height: 1080 },
+      extraHTTPHeaders: {
+        'Accept-Language': 'en-US,en;q=0.9'
+      },
       deviceScaleFactor: 1,
-      isMobile: true,
-      hasTouch: true,
       locale: 'en-US',
       timezoneId: 'America/New_York',
       geolocation: { longitude: -73.935242, latitude: 40.730610 }, // 纽约坐标，可根据需要调整
@@ -47,6 +51,15 @@ async function initGensparkContext() {
       bypassCSP: true, // 绕过内容安全策略
       colorScheme: 'light',
       acceptDownloads: true,
+    })
+
+    // 注入反检测脚本
+    await gensparkContext.addInitScript(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => false })
+      Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] })
+      //@ts-ignore
+      window.navigator.chrome = { runtime: {} }
+      Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] })
     })
   }
 
@@ -198,12 +211,39 @@ app.get('/genspark', async (c) => {
   await new Promise(resolve => setTimeout(resolve, 1000));
   const gensparkPage = await gensparkContext.newPage()
   try {
+    // 模拟真实用户行为
+    await gensparkPage.route('**/*', (route) => {
+      return route.request().resourceType() === 'image'
+        ? route.abort()
+        : route.continue()
+    })
+
     //刷新页面以确保获取新令牌
     await gensparkPage.goto('https://www.genspark.ai/agents?type=moa_chat', {
       waitUntil: 'networkidle',
       timeout: 3600000
     })
-    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // 等待并模拟人类交互
+    await gensparkPage.waitForTimeout(Math.random() * 2000 + 1000)
+
+    // 随机鼠标移动
+    await gensparkPage.mouse.move(
+      Math.random() * gensparkPage.viewportSize()!.width,
+      Math.random() * gensparkPage.viewportSize()!.height
+    )
+    await gensparkPage.waitForSelector('#recaptcha-anchor', { timeout: 10000 })
+    // 随机延迟点击
+    await gensparkPage.waitForTimeout(Math.random() * 1500 + 500)
+    // 模拟点击 reCAPTCHA
+    await gensparkPage.click('#recaptcha-anchor')
+
+    // 等待验证完成
+    await gensparkPage.waitForFunction(() => {
+      const checkbox = document.querySelector('#recaptcha-anchor')
+      return checkbox && checkbox.getAttribute('aria-checked') === 'true'
+    }, { timeout: 10000 })
+    
     // 执行脚本获取令牌
     const token = await gensparkPage.evaluate(() => {
       return new Promise((resolve, reject) => {
