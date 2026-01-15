@@ -12,34 +12,29 @@ config()
 
 const app = new Hono()
 // 浏览器实例
-let browser: Browser | null = null
-
 const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3';
-// 初始化浏览器
-async function initBrowser() {
-  if (!browser) {
-    // 从环境变量读取headless配置，默认为true
-    const headless = process.env.HEADLESS === 'false' ? false : true
 
-    browser = await chromium.launch({
-      headless: headless,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-blink-features=AutomationControlled', // 禁用自动化特征
-        '--disable-infobars',
-        '--window-size=1920,1080'
-      ],
-      executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, // 使用系统 Chromium
-    })
+// 启动浏览器实例
+async function launchBrowser() {
+  // 从环境变量读取headless配置，默认为true
+  const headless = process.env.HEADLESS === 'false' ? false : true
 
-    console.log(`🌐 浏览器启动模式: ${headless ? 'headless' : 'headed'}`)
-  }
+  const browser = await chromium.launch({
+    headless: headless,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-blink-features=AutomationControlled', // 禁用自动化特征
+      '--disable-infobars',
+      '--window-size=1920,1080'
+    ],
+    executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, // 使用系统 Chromium
+  })
+
+  console.log(`🌐 浏览器启动: ${headless ? 'headless' : 'headed'}`)
   return browser
 }
-
-
 
 
 // 添加静态文件服务
@@ -54,11 +49,16 @@ async function handleProxyRequest(c: any) {
 
   console.log(`🚀 开始处理代理请求: ${c.req.method} ${url}`)
 
-  const browser = await initBrowser()
-  const page = await browser.newPage()
-  // 创建统一请求处理器
-  const handler = new UnifiedRequestHandler(page)
+  let browser: Browser | null = null
+  let page: Page | null = null
+  let handler: UnifiedRequestHandler | null = null
+
   try {
+    browser = await launchBrowser()
+    page = await browser.newPage()
+    // 创建统一请求处理器
+    handler = new UnifiedRequestHandler(page)
+
     // 准备请求参数
     const method = c.req.method
     const headers = Object.fromEntries(c.req.raw.headers)
@@ -99,8 +99,15 @@ async function handleProxyRequest(c: any) {
   }
   finally {
     // 清理资源
-    await handler.cleanup()
-    await page.close()
+    if (handler) {
+      await handler.cleanup()
+    }
+    if (page) {
+      await page.close().catch(() => { })
+    }
+    if (browser) {
+      await browser.close().catch(() => { })
+    }
   }
 }
 
@@ -126,10 +133,6 @@ app.all('*', handleProxyRequest)
 
 // 清理函数
 async function cleanup() {
-  if (browser) {
-    await browser.close().catch(() => { });
-    browser = null;
-  }
   process.exit(0)
 }
 
